@@ -30,6 +30,16 @@ export const instrumentNotFound = (instrumentId: number) =>
 export const instrumentNotTradable = (ticker: string) =>
   new AppError(400, 'INSTRUMENT_NOT_TRADABLE', `${ticker} no es un activo que se pueda comprar o vender`);
 
+export const orderNotFound = (orderId: number) =>
+  new AppError(404, 'ORDER_NOT_FOUND', `La orden ${orderId} no existe`);
+
+export const orderNotCancellable = (status: string) =>
+  new AppError(
+    409,
+    'ORDER_NOT_CANCELLABLE',
+    `La orden está en estado ${status}; solo se pueden cancelar las que están en NEW`,
+  );
+
 export const noMarketPrice = (ticker: string) =>
   new AppError(422, 'NO_MARKET_PRICE', `${ticker} no tiene precio de mercado; solo admite órdenes LIMIT`);
 

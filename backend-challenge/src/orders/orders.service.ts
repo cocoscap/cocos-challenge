@@ -7,7 +7,14 @@ import { Order } from '../db/entities/order.entity';
 import { User } from '../db/entities/user.entity';
 import { findLatestPrices } from '../market/market.repository';
 import { CASH_INSTRUMENT_TYPE, CASH_TICKER, type OrderType } from '../shared/domain';
-import { instrumentNotFound, instrumentNotTradable, noMarketPrice, userNotFound } from '../shared/errors';
+import {
+  instrumentNotFound,
+  instrumentNotTradable,
+  noMarketPrice,
+  orderNotCancellable,
+  orderNotFound,
+  userNotFound,
+} from '../shared/errors';
 import { toApiNumber } from '../shared/numbers';
 import { type RejectionReason, decideOrder, resolveSize } from './order-decision';
 import type { CashMovementRequest, OrderRequest, TradeOrderRequest } from './orders.schema';
@@ -68,6 +75,23 @@ export async function submitOrder(db: Db, request: OrderRequest): Promise<OrderR
 
     return toOrderResponse(order, decision.rejectionReason);
   });
+}
+
+/**
+ * Cancela una orden pendiente.
+ * La actualización es condicional y atómica: solo cambia la fila si sigue en `NEW`.
+ */
+export async function cancelOrder(db: Db, orderId: number): Promise<OrderResponse> {
+  const result = await db.manager.update(Order, { id: orderId, status: 'NEW' }, { status: 'CANCELLED' });
+
+  const order = await db.manager.findOneBy(Order, { id: orderId });
+  if (!order) {
+    throw orderNotFound(orderId);
+  }
+  if (result.affected !== 1) {
+    throw orderNotCancellable(order.status);
+  }
+  return toOrderResponse(order);
 }
 
 function resolveTerms(db: Db, request: OrderRequest): Promise<OrderTerms> {
