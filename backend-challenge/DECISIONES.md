@@ -19,7 +19,7 @@ Los ejemplos usan al usuario 1 con los datos de `database.sql`.
 ### Cómo se usa TypeORM
 
 - Las entidades mapean las cuatro tablas existentes y se usan para las escrituras simples.
-- Las consultas con sumas y agrupaciones (saldo, posiciones, último precio) se escriben con el query builder o en SQL.
+- Las consultas más elaboradas, que son el último precio de cada instrumento y la búsqueda de activos, se escriben en SQL.
 - `synchronize` queda desactivado y no hay migraciones, porque la base es provista y no se modifica.
 
 ### Estructura del código
@@ -40,6 +40,8 @@ Los ejemplos usan al usuario 1 con los datos de `database.sql`.
 No hay una tabla de posiciones. La cantidad de acciones, el valor de cada posición y los pesos se calculan en cada consulta a partir de las órdenes.
 
 Es lo que indica el enunciado y evita mantener dos fuentes de datos que puedan quedar desincronizadas: cuando se graba una orden ejecutada, el portfolio ya la refleja.
+
+El cálculo es una sola función, sin acceso a la base, que recibe las órdenes ejecutadas y pendientes del usuario y devuelve sus pesos y sus tenencias. La usan tanto el portfolio como la validación de una orden nueva, así que nunca pueden dar resultados distintos.
 
 ### Las órdenes pendientes reservan saldo
 
@@ -63,7 +65,7 @@ La API no permite vender más de lo que se tiene, así que se trata como un erro
 - **Rendimiento total (%)**: compara el último precio (`close`) con el precio promedio de compra de la posición: `(close − precio promedio) / precio promedio × 100`.
 - **Retorno diario (%)**: compara `close` con `previousClose`. Se informa como un dato aparte, en las posiciones y en la búsqueda de activos.
 
-El precio promedio es el promedio de las compras ponderado por cantidad. Las ventas reducen la cantidad, pero no cambian el promedio.
+El precio promedio es el promedio de las compras ponderado por cantidad, recorriendo las órdenes en orden cronológico. Las ventas reducen la cantidad, pero no cambian el promedio. Si la posición se cierra, el promedio vuelve a empezar con la siguiente compra.
 
 Ejemplo: PAMP se compró a $930 y cierra a $925,85, así que su rendimiento total es −0,45 %.
 
