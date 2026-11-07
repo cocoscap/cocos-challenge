@@ -7,6 +7,7 @@ export const PAMP = 47;
 export const LOMA = 45;
 export const BMA = 31;
 export const METR = 54;
+export const GGAL = 34;
 /** Instrumento sin registros en `marketdata`. */
 export const PGR = 3;
 

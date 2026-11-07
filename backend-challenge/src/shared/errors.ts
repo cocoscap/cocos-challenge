@@ -23,3 +23,6 @@ export const routeNotFound = () => new AppError(404, 'NOT_FOUND', 'La ruta no ex
 
 export const userNotFound = (userId: number) =>
   new AppError(404, 'USER_NOT_FOUND', `El usuario ${userId} no existe`);
+
+export const amountTooSmall = (price: string) =>
+  new AppError(422, 'AMOUNT_TOO_SMALL', `El monto no alcanza para una acción a $${price}`);
