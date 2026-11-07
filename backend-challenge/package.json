@@ -10,7 +10,7 @@
     "test": "jest --runInBand"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.19"
   },
   "dependencies": {
     "decimal.js": "^10.6.0",
