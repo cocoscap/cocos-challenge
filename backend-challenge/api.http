@@ -13,3 +13,32 @@ GET {{baseUrl}}/users/999999/portfolio
 
 ### Id inválido: 400 VALIDATION_ERROR
 GET {{baseUrl}}/users/abc/portfolio
+
+########## Búsqueda de activos ##########
+
+### Buscar por ticker
+GET {{baseUrl}}/instruments?q=PAMP
+
+### Buscar por nombre
+GET {{baseUrl}}/instruments?q=molinos
+
+### Buscar sin acentos ni eñe
+GET {{baseUrl}}/instruments?q=compania
+
+### Ticker exacto primero
+GET {{baseUrl}}/instruments?q=MOLI
+
+### Limitar la cantidad de resultados
+GET {{baseUrl}}/instruments?q=s.a.&limit=5
+
+### Activo sin precios: lastPrice y dailyReturnPct en null
+GET {{baseUrl}}/instruments?q=PGR
+
+### Sin coincidencias: 200 con lista vacía
+GET {{baseUrl}}/instruments?q=zzzzzz
+
+### Sin texto de búsqueda: 400 VALIDATION_ERROR
+GET {{baseUrl}}/instruments
+
+### Límite fuera de rango: 400 VALIDATION_ERROR
+GET {{baseUrl}}/instruments?q=pamp&limit=101

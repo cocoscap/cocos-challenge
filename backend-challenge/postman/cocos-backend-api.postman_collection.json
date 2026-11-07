@@ -43,6 +43,74 @@
           }
         }
       ]
+    },
+    {
+      "name": "Búsqueda de activos",
+      "item": [
+        {
+          "name": "Buscar por ticker",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/instruments?q=PAMP"
+          }
+        },
+        {
+          "name": "Buscar por nombre",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/instruments?q=molinos"
+          }
+        },
+        {
+          "name": "Buscar sin acentos ni eñe",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/instruments?q=compania"
+          }
+        },
+        {
+          "name": "Ticker exacto primero",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/instruments?q=MOLI"
+          }
+        },
+        {
+          "name": "Limitar la cantidad de resultados",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/instruments?q=s.a.&limit=5"
+          }
+        },
+        {
+          "name": "Activo sin precios",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/instruments?q=PGR"
+          }
+        },
+        {
+          "name": "Sin coincidencias (200 con lista vacía)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/instruments?q=zzzzzz"
+          }
+        },
+        {
+          "name": "Sin texto de búsqueda (400 VALIDATION_ERROR)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/instruments"
+          }
+        },
+        {
+          "name": "Límite fuera de rango (400 VALIDATION_ERROR)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/instruments?q=pamp&limit=101"
+          }
+        }
+      ]
     }
   ]
 }

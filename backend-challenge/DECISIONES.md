@@ -77,8 +77,10 @@ Ejemplo: PAMP se compró a $930 y cierra a $925,85, así que su rendimiento tota
 ## Búsqueda de activos
 
 - Un único parámetro `q` busca a la vez en el ticker y en el nombre, sin distinguir mayúsculas ni acentos.
-- Si el texto coincide exactamente con un ticker, ese resultado va primero.
-- La cantidad de resultados tiene un límite.
+- Si el texto coincide exactamente con un ticker, ese resultado va primero; el resto se ordena por ticker.
+- `q` es obligatorio: sin texto de búsqueda la API responde 400 en lugar de listar todos los activos.
+- La cantidad de resultados tiene un límite: 20 por defecto y hasta 100 con el parámetro `limit`.
+- La comparación sin acentos usa funciones estándar de Postgres, sin instalar extensiones.
 - El peso (`ARS`) no aparece: es efectivo, no un activo que se pueda operar.
 - PGR e IRCP no tienen precios cargados, así que aparecen con el precio vacío.
 

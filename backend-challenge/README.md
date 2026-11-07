@@ -128,6 +128,36 @@ Solo se listan los activos con cantidad mayor a cero, ordenados por ticker.
 | `400 VALIDATION_ERROR` | `userId` no es un entero positivo |
 | `404 USER_NOT_FOUND` | El usuario no existe |
 
+### `GET /instruments?q=<texto>`
+
+Busca activos por ticker o por nombre, sin distinguir mayúsculas ni acentos. Cada resultado trae su último precio y su retorno diario.
+
+| Parámetro | Descripción | Por defecto |
+|---|---|---|
+| `q` | Texto a buscar en el ticker o en el nombre | Obligatorio |
+| `limit` | Cantidad máxima de resultados, entre 1 y 100 | `20` |
+
+```bash
+curl "http://localhost:3000/instruments?q=molinos"
+```
+
+```json
+[
+  { "id": 4, "ticker": "MOLA", "name": "Molinos Agro S.A.", "type": "ACCIONES", "lastPrice": 6640, "dailyReturnPct": 0.28 },
+  { "id": 42, "ticker": "MOLI", "name": "Molinos Río de la Plata", "type": "ACCIONES", "lastPrice": 648.5, "dailyReturnPct": -1.37 },
+  { "id": 17, "ticker": "SEMI", "name": "Molinos Juan Semino", "type": "ACCIONES", "lastPrice": 57.2, "dailyReturnPct": 7.52 }
+]
+```
+
+- Si el texto coincide exactamente con un ticker, ese activo va primero; el resto se ordena por ticker.
+- El peso (`ARS`) no aparece: es efectivo, no un activo operable.
+- Un activo sin precios cargados trae `lastPrice` y `dailyReturnPct` en `null`.
+- Si no hay coincidencias, responde `200` con una lista vacía.
+
+| Error | Cuándo |
+|---|---|
+| `400 VALIDATION_ERROR` | Falta `q`, está vacío, o `limit` no es un entero entre 1 y 100 |
+
 ### Formato de los errores
 
 Todos los errores tienen la misma forma. Los de validación suman `details`, con el campo y el motivo de cada problema.
