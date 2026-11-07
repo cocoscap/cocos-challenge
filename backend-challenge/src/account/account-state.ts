@@ -28,6 +28,8 @@ export interface Holding {
   reserved: number;
   /** Acciones que puede vender en una orden nueva. */
   available: number;
+  /** Promedio de las compras ejecutadas, ponderado por cantidad. Las ventas no lo cambian. */
+  averagePrice: Decimal;
 }
 
 export interface AccountState {
@@ -49,17 +51,17 @@ export function computeAccountState(orders: readonly LedgerOrder[]): AccountStat
   const holdingOf = (instrumentId: number): Holding => {
     let holding = holdings.get(instrumentId);
     if (!holding) {
-      holding = { quantity: 0, reserved: 0, available: 0 };
+      holding = { quantity: 0, reserved: 0, available: 0, averagePrice: ZERO };
       holdings.set(instrumentId, holding);
     }
     return holding;
   };
 
-  for (const order of orders) {
+  for (const order of chronological(orders)) {
     if (order.status === 'FILLED') {
       total = total.plus(filledCashEffect(order));
       if (order.side === 'BUY') {
-        holdingOf(order.instrumentId).quantity += order.size;
+        applyBuy(holdingOf(order.instrumentId), order);
       } else if (order.side === 'SELL') {
         holdingOf(order.instrumentId).quantity -= order.size;
       }
@@ -77,6 +79,30 @@ export function computeAccountState(orders: readonly LedgerOrder[]): AccountStat
   }
 
   return { cash: { total, reserved, available: total.minus(reserved) }, holdings };
+}
+
+/** El precio promedio depende del orden: se recorre por fecha y, a igual fecha, por id. */
+function chronological(orders: readonly LedgerOrder[]): LedgerOrder[] {
+  return [...orders].sort(
+    (a, b) => (a.datetime?.getTime() ?? 0) - (b.datetime?.getTime() ?? 0) || a.id - b.id,
+  );
+}
+
+/**
+ * Suma una compra ejecutada a la tenencia y actualiza el precio promedio.
+ * Si la tenencia estaba en cero o era negativa, el promedio arranca de nuevo con esta compra.
+ */
+function applyBuy(holding: Holding, order: LedgerOrder): void {
+  const price = order.price ?? ZERO;
+
+  holding.averagePrice =
+    holding.quantity > 0
+      ? holding.averagePrice
+          .times(holding.quantity)
+          .plus(price.times(order.size))
+          .dividedBy(holding.quantity + order.size)
+      : price;
+  holding.quantity += order.size;
 }
 
 /** Cuánto suma o resta a los pesos una orden ejecutada. */

@@ -128,3 +128,78 @@ describe('computeAccountState: tenencias', () => {
     expect(computeAccountState([]).holdings.size).toBe(0);
   });
 });
+
+describe('computeAccountState: precio promedio de compra', () => {
+  const averagePrice = (orders: Parameters<typeof computeAccountState>[0]) =>
+    computeAccountState(orders).holdings.get(PAMP)?.averagePrice;
+
+  it('pondera por cantidad dos compras a distinto precio', () => {
+    const average = averagePrice([
+      ledgerOrder({ side: 'BUY', status: 'FILLED', size: 10, price: new Decimal(100) }),
+      ledgerOrder({ side: 'BUY', status: 'FILLED', size: 30, price: new Decimal(200) }),
+    ]);
+
+    expect(average?.toNumber()).toBe(175);
+  });
+
+  it('no cambia con una venta', () => {
+    expect(averagePrice(seedOrders)?.toNumber()).toBe(930);
+  });
+
+  it('se reinicia con la primera compra después de cerrar la posición', () => {
+    const average = averagePrice([
+      ledgerOrder({ side: 'BUY', status: 'FILLED', size: 10, price: new Decimal(100) }),
+      ledgerOrder({ side: 'SELL', status: 'FILLED', size: 10, price: new Decimal(120) }),
+      ledgerOrder({ side: 'BUY', status: 'FILLED', size: 5, price: new Decimal(200) }),
+    ]);
+
+    expect(average?.toNumber()).toBe(200);
+  });
+
+  it('toma el precio de la compra cuando la tenencia venía negativa', () => {
+    const state = computeAccountState([
+      ledgerOrder({ side: 'BUY', status: 'FILLED', size: 20, price: new Decimal(1540) }),
+      ledgerOrder({ side: 'SELL', status: 'FILLED', size: 30, price: new Decimal(1530) }),
+      ledgerOrder({ side: 'BUY', status: 'FILLED', size: 15, price: new Decimal(1500) }),
+    ]);
+
+    expect(state.holdings.get(PAMP)).toMatchObject({ quantity: 5 });
+    expect(state.holdings.get(PAMP)?.averagePrice.toNumber()).toBe(1500);
+  });
+
+  it('recorre las órdenes en orden cronológico aunque lleguen desordenadas', () => {
+    const first = ledgerOrder({ side: 'BUY', status: 'FILLED', size: 10, price: new Decimal(100) });
+    const second = ledgerOrder({ side: 'SELL', status: 'FILLED', size: 10, price: new Decimal(120) });
+    const third = ledgerOrder({ side: 'BUY', status: 'FILLED', size: 5, price: new Decimal(200) });
+
+    expect(averagePrice([third, first, second])?.toNumber()).toBe(200);
+  });
+
+  it('desempata por id las órdenes con la misma fecha', () => {
+    const datetime = new Date('2024-05-01T10:00:00');
+    const first = { ...ledgerOrder({ side: 'BUY', status: 'FILLED', size: 10, price: new Decimal(100) }), datetime };
+    const second = { ...ledgerOrder({ side: 'SELL', status: 'FILLED', size: 10, price: new Decimal(120) }), datetime };
+    const third = { ...ledgerOrder({ side: 'BUY', status: 'FILLED', size: 5, price: new Decimal(200) }), datetime };
+
+    expect(averagePrice([third, second, first])?.toNumber()).toBe(200);
+  });
+
+  it('no usa las compras pendientes ni las canceladas', () => {
+    const average = averagePrice([
+      ledgerOrder({ side: 'BUY', status: 'FILLED', size: 10, price: new Decimal(100) }),
+      ledgerOrder({ side: 'BUY', status: 'NEW', size: 10, price: new Decimal(500) }),
+      ledgerOrder({ side: 'BUY', status: 'CANCELLED', size: 10, price: new Decimal(900) }),
+    ]);
+
+    expect(average?.toNumber()).toBe(100);
+  });
+
+  it('conserva los decimales del promedio', () => {
+    const average = averagePrice([
+      ledgerOrder({ side: 'BUY', status: 'FILLED', size: 1, price: new Decimal(100) }),
+      ledgerOrder({ side: 'BUY', status: 'FILLED', size: 2, price: new Decimal('100.50') }),
+    ]);
+
+    expect(average?.toFixed(4)).toBe('100.3333');
+  });
+});

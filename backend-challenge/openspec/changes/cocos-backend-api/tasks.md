@@ -19,7 +19,7 @@ Los tests que leen instrumentos y precios asumen los datos de `database.sql`; si
 
 - [x] 2.1 Copiar las once órdenes del usuario 1 de `database.sql` como datos de ejemplo de los tests y escribir primero los tests de pesos: totales 753000, reservados 125500, disponibles 627500, usuario sin órdenes en 0, y órdenes `CANCELLED` y `REJECTED` ignoradas; implementar esa parte de `computeAccountState` y verificar que pasan
 - [x] 2.2 Escribir primero los tests de tenencias: PAMP 40, METR 500, BMA -10, una compra `NEW` no suma tenencia, una venta `NEW` reserva acciones y las disponibles son la tenencia menos la reserva; completar `computeAccountState` y verificar que pasan
-- [ ] 2.3 Escribir primero los tests del precio promedio: dos compras a distinto precio (175), una venta que no lo cambia (930) y una posición cerrada y reabierta (200); implementarlo dentro del estado de cuenta y verificar que pasan
+- [x] 2.3 Escribir primero los tests del precio promedio: dos compras a distinto precio (175), una venta que no lo cambia (930) y una posición cerrada y reabierta (200); implementarlo dentro del estado de cuenta y verificar que pasan
 - [ ] 2.4 Escribir primero el test de integración del repositorio: devuelve solo las órdenes `FILLED` y `NEW` de un usuario, ordenadas por `datetime` e `id`; implementar `account.repository.ts` y verificar que pasa
 - [ ] 2.5 Actualizar `DECISIONES.md`: el saldo y las posiciones se calculan en funciones puras sobre las órdenes del usuario, y el SQL elaborado queda para el último precio y la búsqueda; verificar que el documento no contradice `design.md`
 
