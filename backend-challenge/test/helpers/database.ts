@@ -1,6 +1,8 @@
 import 'reflect-metadata';
 import { config } from 'dotenv';
+import type { Express } from 'express';
 import { DataSource, QueryRunner } from 'typeorm';
+import { createApp } from '../../src/app';
 import { loadEnv } from '../../src/config/env';
 import { createDataSource } from '../../src/db/data-source';
 import type { Db } from '../../src/db/db';
@@ -29,6 +31,8 @@ export interface TestContext {
   queryRunner: QueryRunner;
   /** `Db` ligado a la transacción del test: nada de lo que escriba queda grabado. */
   db: Db;
+  /** La app armada sobre ese `Db`, para llamarla por HTTP con supertest. */
+  app: Express;
 }
 
 /**
@@ -57,7 +61,8 @@ export async function beginTestTransaction(): Promise<TestContext> {
   const queryRunner = (await connectTestDatabase()).createQueryRunner();
   await queryRunner.connect();
   await queryRunner.startTransaction();
-  return { queryRunner, db: createQueryRunnerDb(queryRunner) };
+  const db = createQueryRunnerDb(queryRunner);
+  return { queryRunner, db, app: createApp(db) };
 }
 
 /** Deshace todo lo que el test escribió y devuelve la conexión. */
@@ -66,4 +71,32 @@ export async function rollbackTestTransaction(ctx: TestContext): Promise<void> {
     await ctx.queryRunner.rollbackTransaction();
   }
   await ctx.queryRunner.release();
+}
+
+/**
+ * Registra los hooks de Jest para que cada test del archivo corra en su propia transacción con rollback.
+ * Devuelve una función que entrega el contexto del test en curso.
+ */
+export function useTestTransaction(): () => TestContext {
+  let current: TestContext | undefined;
+
+  beforeEach(async () => {
+    current = await beginTestTransaction();
+  });
+
+  afterEach(async () => {
+    if (current) {
+      await rollbackTestTransaction(current);
+      current = undefined;
+    }
+  });
+
+  afterAll(closeTestDatabase);
+
+  return () => {
+    if (!current) {
+      throw new Error('No hay una transacción de test abierta');
+    }
+    return current;
+  };
 }
