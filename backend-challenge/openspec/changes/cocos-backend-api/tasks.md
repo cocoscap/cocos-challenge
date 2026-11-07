@@ -29,7 +29,7 @@ Los tests que leen instrumentos y precios asumen los datos de `database.sql`; si
 - [x] 3.2 Escribir primero el test de integración del último precio: para PAMP devuelve el registro con la fecha más reciente, y para un instrumento sin `marketdata` no devuelve nada; implementar `market.repository.ts` y verificar que pasa
 - [x] 3.3 Escribir primero los tests del armado del portfolio con los datos de ejemplo: valor de la cuenta 904784, METR y PAMP en ese orden con sus valores, BMA y ARS excluidos, una posición sin precio con `null` y sin sumar al total, y un usuario sin órdenes con todo en 0; implementar el armado puro y verificar que pasan
 - [x] 3.4 Escribir primero los tests funcionales de `GET /users/:userId/portfolio`: 200 con `userId`, `totalAccountValue`, `cash` y `positions`, 404 `USER_NOT_FOUND` y 400 con un id inválido; implementar la ruta y el servicio y verificar que pasan
-- [ ] 3.5 Documentar el endpoint en `README.md` y agregar su pedido a `api.http` y a la colección de Postman; verificar ejecutando el pedido de `api.http` contra la app levantada que la respuesta tiene la forma documentada
+- [x] 3.5 Documentar el endpoint en `README.md` y agregar su pedido a `api.http` y a la colección de Postman; verificar ejecutando el pedido de `api.http` contra la app levantada que la respuesta tiene la forma documentada
 
 ## 4. Búsqueda de activos
 

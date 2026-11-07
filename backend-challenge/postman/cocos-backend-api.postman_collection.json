@@ -1,0 +1,48 @@
+{
+  "info": {
+    "name": "Cocos Challenge - Backend API",
+    "description": "Pedidos de ejemplo para la API del challenge de backend de Cocos. La variable baseUrl apunta a http://localhost:3000.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    }
+  ],
+  "item": [
+    {
+      "name": "Portfolio",
+      "item": [
+        {
+          "name": "Portfolio de un usuario",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users/1/portfolio"
+          }
+        },
+        {
+          "name": "Portfolio de un usuario sin movimientos",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users/2/portfolio"
+          }
+        },
+        {
+          "name": "Usuario inexistente (404 USER_NOT_FOUND)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users/999999/portfolio"
+          }
+        },
+        {
+          "name": "Id inválido (400 VALIDATION_ERROR)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users/abc/portfolio"
+          }
+        }
+      ]
+    }
+  ]
+}

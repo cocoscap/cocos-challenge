@@ -69,6 +69,11 @@ El precio promedio es el promedio de las compras ponderado por cantidad, recorri
 
 Ejemplo: PAMP se compró a $930 y cierra a $925,85, así que su rendimiento total es −0,45 %.
 
+### Orden y activos sin precio
+
+- Las posiciones se devuelven ordenadas por ticker, para que la respuesta sea siempre la misma.
+- Si un activo en cartera no tiene precios cargados, se lista igual, con el precio, el valor y los rendimientos vacíos, y no suma al valor de la cuenta.
+
 ## Búsqueda de activos
 
 - Un único parámetro `q` busca a la vez en el ticker y en el nombre, sin distinguir mayúsculas ni acentos.

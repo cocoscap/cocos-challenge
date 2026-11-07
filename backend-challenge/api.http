@@ -1,0 +1,15 @@
+@baseUrl = http://localhost:3000
+
+########## Portfolio ##########
+
+### Portfolio de un usuario
+GET {{baseUrl}}/users/1/portfolio
+
+### Portfolio de un usuario sin movimientos
+GET {{baseUrl}}/users/2/portfolio
+
+### Usuario inexistente: 404 USER_NOT_FOUND
+GET {{baseUrl}}/users/999999/portfolio
+
+### Id inválido: 400 VALIDATION_ERROR
+GET {{baseUrl}}/users/abc/portfolio
