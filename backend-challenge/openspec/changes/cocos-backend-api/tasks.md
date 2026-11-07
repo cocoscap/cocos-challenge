@@ -12,7 +12,7 @@ Los tests que leen instrumentos y precios asumen los datos de `database.sql`; si
 - [x] 1.5 Escribir primero el test de integración que lee el instrumento PAMP y una orden con sus propiedades en camelCase y sus precios como decimales; implementar las cuatro entidades, `data-source.ts` con `synchronize: false` y `Db`; verificar que el test pasa
 - [x] 1.6 Escribir primero el test del arnés: un test inserta una orden usando `db.transaction` y, después del rollback, otra conexión cuenta en `orders` las mismas filas que antes; implementar `test/helpers` y verificar que pasa. Si las transacciones anidadas de TypeORM no se comportan como savepoints, implementar los savepoints a mano dentro de `Db`
 - [x] 1.7 Escribir primero los tests de `shared/numbers` (-0.4462 → -0.45, 753000 → número, valor ausente → `null`); implementarlo y verificar que pasan
-- [ ] 1.8 Escribir primero los tests por HTTP del manejo de errores (ruta inexistente → 404 `NOT_FOUND`, JSON mal formado → 400 `VALIDATION_ERROR`, error no previsto → 500 `INTERNAL_ERROR` sin trazas); implementar `createApp`, `AppError` y el middleware de errores; verificar que pasan
+- [x] 1.8 Escribir primero los tests por HTTP del manejo de errores (ruta inexistente → 404 `NOT_FOUND`, JSON mal formado → 400 `VALIDATION_ERROR`, error no previsto → 500 `INTERNAL_ERROR` sin trazas); implementar `createApp`, `AppError` y el middleware de errores; verificar que pasan
 - [ ] 1.9 Crear `README.md` con requisitos, configuración de `.env` y los comandos `npm run dev` y `npm test`; verificar, siguiendo sus pasos, que la app arranca y responde 404 `NOT_FOUND` en `/`
 
 ## 2. Estado de cuenta
