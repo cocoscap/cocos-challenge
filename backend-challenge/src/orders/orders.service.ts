@@ -5,11 +5,12 @@ import type { Db } from '../db/db';
 import { Instrument } from '../db/entities/instrument.entity';
 import { Order } from '../db/entities/order.entity';
 import { User } from '../db/entities/user.entity';
+import { findLatestPrices } from '../market/market.repository';
 import { CASH_INSTRUMENT_TYPE, CASH_TICKER, type OrderType } from '../shared/domain';
 import { userNotFound } from '../shared/errors';
 import { toApiNumber } from '../shared/numbers';
-import { type RejectionReason, decideOrder } from './order-decision';
-import type { CashMovementRequest, OrderRequest } from './orders.schema';
+import { type RejectionReason, decideOrder, resolveSize } from './order-decision';
+import type { CashMovementRequest, OrderRequest, TradeOrderRequest } from './orders.schema';
 import { acquireUserLock } from './user-lock';
 
 export interface OrderResponse {
@@ -73,7 +74,25 @@ function resolveTerms(db: Db, request: OrderRequest): Promise<OrderTerms> {
   if (request.side === 'CASH_IN' || request.side === 'CASH_OUT') {
     return cashTerms(db, request);
   }
-  throw new Error('Las órdenes de compra y venta todavía no están implementadas');
+  return tradeTerms(db, request);
+}
+
+/** Una compra o venta toma el precio del mercado o el precio límite, y de ahí sale la cantidad. */
+async function tradeTerms(db: Db, request: TradeOrderRequest): Promise<OrderTerms> {
+  const instrument = await db.manager.findOneByOrFail(Instrument, { id: request.instrumentId });
+
+  const price = request.type === 'MARKET' ? await marketPrice(db, instrument) : new Decimal(request.price ?? 0);
+
+  return { instrumentId: instrument.id, type: request.type, size: resolveSize(request, price), price };
+}
+
+/** Precio de una orden a mercado: el último `close` del instrumento. */
+async function marketPrice(db: Db, instrument: Instrument): Promise<Decimal> {
+  const latest = (await findLatestPrices(db.manager, [instrument.id])).get(instrument.id);
+  if (!latest?.close) {
+    throw new Error(`El instrumento ${instrument.ticker} no tiene precio de mercado`);
+  }
+  return latest.close;
 }
 
 /** Un movimiento de efectivo se graba sobre el instrumento ARS, a mercado y con precio 1. */
