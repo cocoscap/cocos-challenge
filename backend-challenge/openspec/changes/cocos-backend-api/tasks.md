@@ -34,7 +34,7 @@ Los tests que leen instrumentos y precios asumen los datos de `database.sql`; si
 ## 4. Búsqueda de activos
 
 - [x] 4.1 Escribir primero los tests de la normalización del texto: espacios de los extremos, mayúsculas, acentos, `ñ` y comodines `%`, `_` y `\` escapados; implementar `search-text.ts` y verificar que pasan
-- [ ] 4.2 Escribir primero los tests de integración del repositorio: por ticker, por nombre (`molinos` → MOLA, MOLI, SEMI), sin acentos (`compania` → INTR), tipo `MONEDA` excluido, ticker exacto primero (`MOLI` → MOLI, MOLA, SEMI) y límite; implementar `instruments.repository.ts` y verificar que pasan
+- [x] 4.2 Escribir primero los tests de integración del repositorio: por ticker, por nombre (`molinos` → MOLA, MOLI, SEMI), sin acentos (`compania` → INTR), tipo `MONEDA` excluido, ticker exacto primero (`MOLI` → MOLI, MOLA, SEMI) y límite; implementar `instruments.repository.ts` y verificar que pasan
 - [ ] 4.3 Escribir primero los tests funcionales de `GET /instruments`: 200 con `lastPrice` y `dailyReturnPct` (PAMP con valores, PGR en `null`), lista vacía sin coincidencias, 20 resultados por defecto, 400 sin `q` o con `q` vacío y 400 con `limit` fuera de rango; implementar la ruta y el servicio y verificar que pasan
 - [ ] 4.4 Documentar el endpoint en `README.md` y agregar sus pedidos a `api.http` y a la colección de Postman; verificar ejecutando los pedidos de `api.http` contra la app levantada que las respuestas tienen la forma documentada
 
