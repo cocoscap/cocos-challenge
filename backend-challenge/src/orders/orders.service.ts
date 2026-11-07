@@ -7,7 +7,7 @@ import { Order } from '../db/entities/order.entity';
 import { User } from '../db/entities/user.entity';
 import { findLatestPrices } from '../market/market.repository';
 import { CASH_INSTRUMENT_TYPE, CASH_TICKER, type OrderType } from '../shared/domain';
-import { userNotFound } from '../shared/errors';
+import { instrumentNotFound, instrumentNotTradable, noMarketPrice, userNotFound } from '../shared/errors';
 import { toApiNumber } from '../shared/numbers';
 import { type RejectionReason, decideOrder, resolveSize } from './order-decision';
 import type { CashMovementRequest, OrderRequest, TradeOrderRequest } from './orders.schema';
@@ -79,7 +79,13 @@ function resolveTerms(db: Db, request: OrderRequest): Promise<OrderTerms> {
 
 /** Una compra o venta toma el precio del mercado o el precio límite, y de ahí sale la cantidad. */
 async function tradeTerms(db: Db, request: TradeOrderRequest): Promise<OrderTerms> {
-  const instrument = await db.manager.findOneByOrFail(Instrument, { id: request.instrumentId });
+  const instrument = await db.manager.findOneBy(Instrument, { id: request.instrumentId });
+  if (!instrument) {
+    throw instrumentNotFound(request.instrumentId);
+  }
+  if (instrument.type === CASH_INSTRUMENT_TYPE) {
+    throw instrumentNotTradable(instrument.ticker);
+  }
 
   const price = request.type === 'MARKET' ? await marketPrice(db, instrument) : new Decimal(request.price ?? 0);
 
@@ -90,7 +96,7 @@ async function tradeTerms(db: Db, request: TradeOrderRequest): Promise<OrderTerm
 async function marketPrice(db: Db, instrument: Instrument): Promise<Decimal> {
   const latest = (await findLatestPrices(db.manager, [instrument.id])).get(instrument.id);
   if (!latest?.close) {
-    throw new Error(`El instrumento ${instrument.ticker} no tiene precio de mercado`);
+    throw noMarketPrice(instrument.ticker);
   }
   return latest.close;
 }
