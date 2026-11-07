@@ -100,6 +100,10 @@ Solo se graba como `REJECTED` una orden bien formada que el usuario no puede cub
 
 El precio de una orden MARKET es el último `close`; el de una LIMIT es el que se envía. Si se envía un monto en pesos en lugar de una cantidad, la cantidad es `floor(monto / precio)`.
 
+Una orden `REJECTED` devuelve el motivo en el campo `rejectionReason` (`INSUFFICIENT_FUNDS` o `INSUFFICIENT_HOLDINGS`). El motivo viaja solo en la respuesta: la tabla no tiene dónde guardarlo y no se modifica.
+
+La fecha y hora de la orden las asigna la API al grabarla.
+
 ### Cancelación de órdenes
 
 Hay un endpoint para cancelar órdenes. Solo se pueden cancelar las que están en `NEW`; en cualquier otro estado responde 409.
@@ -112,12 +116,18 @@ El enunciado no lo lista entre los endpoints, pero sin él el estado `CANCELLED`
 
 Esto permite cargar saldo a los usuarios que no tienen movimientos (2, 3 y 4) y probar la API de punta a punta.
 
+El pedido lleva solo `userId`, `side` y `size`; el instrumento, el tipo y el precio los completa la API. Un depósito se ejecuta siempre, y un retiro por más de lo disponible se graba como `REJECTED`, igual que una compra.
+
+### Órdenes simultáneas
+
+Antes de validar una orden, la API toma un lock por usuario dentro de la transacción (un advisory lock de Postgres). Así dos órdenes simultáneas del mismo usuario se procesan de a una y la segunda ya ve a la primera. El lock no bloquea filas ni requiere permisos sobre las tablas.
+
 ### Otros casos
 
 | Caso | Qué pasa |
 |---|---|
 | Se envían cantidad (`size`) y monto (`amount`) a la vez, o ninguno de los dos | Error 400 |
-| El monto no alcanza para comprar una acción | Error, no se graba la orden |
+| El monto no alcanza para comprar una acción | Error 422, no se graba la orden |
 | Se envía un monto en una venta | Funciona igual que en una compra |
 | Se intenta comprar o vender `ARS` | Error 400 |
 | Orden MARKET con precio | Error 400, para que nadie crea que se respetó ese precio |

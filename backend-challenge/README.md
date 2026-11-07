@@ -158,6 +158,78 @@ curl "http://localhost:3000/instruments?q=molinos"
 |---|---|
 | `400 VALIDATION_ERROR` | Falta `q`, está vacío, o `limit` no es un entero entre 1 y 100 |
 
+### `POST /orders`
+
+Envía una orden de compra o de venta, o un movimiento de efectivo. La orden queda grabada en la tabla `orders`.
+
+**Compra o venta**
+
+| Campo | Descripción |
+|---|---|
+| `userId` | Id del usuario |
+| `instrumentId` | Id del activo; se obtiene con la búsqueda |
+| `side` | `BUY` o `SELL` |
+| `type` | `MARKET` o `LIMIT` |
+| `size` | Cantidad de acciones. Se envía `size` o `amount`, nunca los dos |
+| `amount` | Monto en pesos. La API calcula la cantidad entera de acciones que ese monto alcanza a cubrir |
+| `price` | Precio límite. Obligatorio en `LIMIT`; no se envía en `MARKET` |
+
+```bash
+curl -X POST http://localhost:3000/orders \
+  -H "Content-Type: application/json" \
+  -d '{ "userId": 2, "instrumentId": 47, "side": "BUY", "type": "MARKET", "size": 10 }'
+```
+
+```json
+{
+  "id": 12,
+  "userId": 2,
+  "instrumentId": 47,
+  "side": "BUY",
+  "type": "MARKET",
+  "size": 10,
+  "price": 925.85,
+  "status": "FILLED",
+  "datetime": "2024-03-01T15:04:05.000Z"
+}
+```
+
+- Una orden `MARKET` usa el último `close` del activo; una `LIMIT`, el `price` enviado.
+- Con `amount`, la cantidad es la parte entera de `amount / precio`. Por ejemplo, $10.000 a $925,85 son 10 acciones.
+
+**Movimiento de efectivo**
+
+Un depósito (`CASH_IN`) o un retiro (`CASH_OUT`) lleva solo `userId`, `side` y `size`, que es el monto en pesos sin centavos. Se graba sobre el instrumento `ARS`, con precio 1.
+
+```bash
+curl -X POST http://localhost:3000/orders \
+  -H "Content-Type: application/json" \
+  -d '{ "userId": 2, "side": "CASH_IN", "size": 100000 }'
+```
+
+**Estado de la orden**
+
+Cuando la orden se graba, la respuesta es `201` y el campo `status` indica cómo quedó:
+
+| `status` | Cuándo |
+|---|---|
+| `FILLED` | Orden `MARKET` o movimiento de efectivo aceptado: se ejecuta al instante |
+| `NEW` | Orden `LIMIT` aceptada: queda pendiente y reserva los pesos (compra) o las acciones (venta) |
+| `REJECTED` | El usuario no tiene pesos o acciones disponibles suficientes. La orden se graba igual |
+
+Una orden `REJECTED` suma el campo `rejectionReason`: `INSUFFICIENT_FUNDS` si faltan pesos o `INSUFFICIENT_HOLDINGS` si faltan acciones.
+
+**Pedidos que no se graban**
+
+| Error | Cuándo |
+|---|---|
+| `400 VALIDATION_ERROR` | Faltan campos, tienen valores inválidos o no corresponden al tipo de orden |
+| `400 INSTRUMENT_NOT_TRADABLE` | Se intenta comprar o vender el peso (`ARS`) |
+| `404 USER_NOT_FOUND` | El usuario no existe |
+| `404 INSTRUMENT_NOT_FOUND` | El instrumento no existe |
+| `422 NO_MARKET_PRICE` | Orden `MARKET` sobre un activo sin precios cargados; admite `LIMIT` |
+| `422 AMOUNT_TOO_SMALL` | El monto no alcanza para una acción |
+
 ### Formato de los errores
 
 Todos los errores tienen la misma forma. Los de validación suman `details`, con el campo y el motivo de cada problema.
