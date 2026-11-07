@@ -132,7 +132,15 @@ Se usa el servidor Postgres provisto para el challenge, sin Docker. Las credenci
 
 La API funciona sobre las tablas tal como vienen: no agrega índices, constraints ni extensiones.
 
-La base es provista y no se conocen los permisos disponibles. Además, con el volumen de datos del challenge esos cambios no hacen falta, y las validaciones se hacen en la API.
+Se prefirió usar la base original tal como se entrega. Además, con el volumen de datos del challenge esos cambios no hacen falta, y las validaciones se hacen en la API.
+
+### Verificación del acceso
+
+Antes de escribir código se revisó la base provista con consultas de solo lectura:
+
+- Es Postgres 18, con las cuatro tablas y las mismas columnas que `database.sql`.
+- Los datos coinciden con `database.sql`: 4 usuarios, 66 instrumentos, 126 precios y 11 órdenes.
+- El usuario de conexión puede leer y escribir en las cuatro tablas. La API solo escribe en `orders`.
 
 Mejoras identificadas, para aplicar en una base propia:
 
