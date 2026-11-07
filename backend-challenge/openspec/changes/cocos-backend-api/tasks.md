@@ -25,7 +25,7 @@ Los tests que leen instrumentos y precios asumen los datos de `database.sql`; si
 
 ## 3. Portfolio
 
-- [ ] 3.1 Escribir primero los tests del rendimiento total y del retorno diario: PAMP -0.45 y 0.44, METR -8.20, y `previousClose` ausente o en cero → `null`; implementar `market/returns.ts` y verificar que pasan
+- [x] 3.1 Escribir primero los tests del rendimiento total y del retorno diario: PAMP -0.45 y 0.44, METR -8.20, y `previousClose` ausente o en cero → `null`; implementar `market/returns.ts` y verificar que pasan
 - [ ] 3.2 Escribir primero el test de integración del último precio: para PAMP devuelve el registro con la fecha más reciente, y para un instrumento sin `marketdata` no devuelve nada; implementar `market.repository.ts` y verificar que pasa
 - [ ] 3.3 Escribir primero los tests del armado del portfolio con los datos de ejemplo: valor de la cuenta 904784, METR y PAMP en ese orden con sus valores, BMA y ARS excluidos, una posición sin precio con `null` y sin sumar al total, y un usuario sin órdenes con todo en 0; implementar el armado puro y verificar que pasan
 - [ ] 3.4 Escribir primero los tests funcionales de `GET /users/:userId/portfolio`: 200 con `userId`, `totalAccountValue`, `cash` y `positions`, 404 `USER_NOT_FOUND` y 400 con un id inválido; implementar la ruta y el servicio y verificar que pasan
