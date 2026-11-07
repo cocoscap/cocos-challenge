@@ -20,3 +20,6 @@ export const validationError = (details: ErrorDetail[], message = 'Los datos env
   new AppError(400, 'VALIDATION_ERROR', message, details);
 
 export const routeNotFound = () => new AppError(404, 'NOT_FOUND', 'La ruta no existe');
+
+export const userNotFound = (userId: number) =>
+  new AppError(404, 'USER_NOT_FOUND', `El usuario ${userId} no existe`);
