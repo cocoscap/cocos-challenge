@@ -1,6 +1,7 @@
 import express, { type Express } from 'express';
 import type { Db } from './db/db';
 import { instrumentsRouter } from './instruments/instruments.routes';
+import { ordersRouter } from './orders/orders.routes';
 import { portfolioRouter } from './portfolio/portfolio.routes';
 import { errorHandler, notFoundHandler } from './shared/error-handler';
 
@@ -12,6 +13,7 @@ export function createApp(db: Db): Express {
 
   app.use('/users', portfolioRouter(db));
   app.use('/instruments', instrumentsRouter(db));
+  app.use('/orders', ordersRouter(db));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

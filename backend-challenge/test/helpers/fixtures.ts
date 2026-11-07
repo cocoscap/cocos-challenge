@@ -1,4 +1,6 @@
 import Decimal from 'decimal.js';
+import type { Express } from 'express';
+import request from 'supertest';
 import type { Db } from '../../src/db/db';
 import { Order } from '../../src/db/entities/order.entity';
 
@@ -25,6 +27,30 @@ export async function blankUserId(db: Db): Promise<number> {
     [first.id],
   );
   return first.id;
+}
+
+/** Envía un pedido a `POST /orders`. */
+export function postOrder(app: Express, body: object) {
+  return request(app).post('/orders').send(body);
+}
+
+/** Trae el portfolio de un usuario por la API. */
+export async function getPortfolio(app: Express, userId: number) {
+  const response = await request(app).get(`/users/${userId}/portfolio`);
+  return response.body;
+}
+
+/** Deposita pesos por la API, para arrancar un test con saldo. */
+export async function deposit(app: Express, userId: number, size: number): Promise<void> {
+  const response = await postOrder(app, { userId, side: 'CASH_IN', size });
+  if (response.status !== 201 || response.body.status !== 'FILLED') {
+    throw new Error(`No se pudo depositar: ${response.status} ${JSON.stringify(response.body)}`);
+  }
+}
+
+/** Cantidad total de filas en `orders`, vista desde la transacción del test. */
+export function countOrders(db: Db): Promise<number> {
+  return db.manager.count(Order);
 }
 
 type OrderValues = Partial<Order> & Pick<Order, 'userId' | 'instrumentId' | 'side' | 'status'>;

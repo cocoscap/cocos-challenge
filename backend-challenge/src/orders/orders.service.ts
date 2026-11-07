@@ -1,0 +1,101 @@
+import Decimal from 'decimal.js';
+import { computeAccountState } from '../account/account-state';
+import { findLedgerOrders } from '../account/account.repository';
+import type { Db } from '../db/db';
+import { Instrument } from '../db/entities/instrument.entity';
+import { Order } from '../db/entities/order.entity';
+import { User } from '../db/entities/user.entity';
+import { CASH_INSTRUMENT_TYPE, CASH_TICKER, type OrderType } from '../shared/domain';
+import { userNotFound } from '../shared/errors';
+import { toApiNumber } from '../shared/numbers';
+import { type RejectionReason, decideOrder } from './order-decision';
+import type { CashMovementRequest, OrderRequest } from './orders.schema';
+import { acquireUserLock } from './user-lock';
+
+export interface OrderResponse {
+  id: number;
+  userId: number;
+  instrumentId: number;
+  side: string;
+  type: string;
+  size: number;
+  price: number | null;
+  status: string;
+  datetime: string;
+  /** Solo en órdenes `REJECTED`. No se guarda: la tabla no tiene una columna para el motivo. */
+  rejectionReason?: RejectionReason;
+}
+
+/** Lo que hay que definir de una orden antes de validarla contra el saldo del usuario. */
+interface OrderTerms {
+  instrumentId: number;
+  type: OrderType;
+  size: number;
+  price: Decimal;
+}
+
+/**
+ * Graba una orden y devuelve cómo quedó.
+ * Los errores del pedido (usuario o instrumento inexistente, sin precio, monto insuficiente) cortan antes
+ * de grabar; una orden bien formada que el usuario no puede cubrir se graba como `REJECTED`.
+ */
+export async function submitOrder(db: Db, request: OrderRequest): Promise<OrderResponse> {
+  const user = await db.manager.findOneBy(User, { id: request.userId });
+  if (!user) {
+    throw userNotFound(request.userId);
+  }
+
+  const terms = await resolveTerms(db, request);
+
+  return db.transaction(async (manager) => {
+    // A partir de acá, ninguna otra orden del mismo usuario puede validarse hasta que esta termine.
+    await acquireUserLock(manager, user.id);
+
+    const state = computeAccountState(await findLedgerOrders(manager, user.id));
+    const decision = decideOrder({ side: request.side, ...terms, state });
+
+    const order = await manager.save(Order, {
+      userId: user.id,
+      instrumentId: terms.instrumentId,
+      side: request.side,
+      type: terms.type,
+      size: terms.size,
+      price: terms.price,
+      status: decision.status,
+      datetime: new Date(),
+    });
+
+    return toOrderResponse(order, decision.rejectionReason);
+  });
+}
+
+function resolveTerms(db: Db, request: OrderRequest): Promise<OrderTerms> {
+  if (request.side === 'CASH_IN' || request.side === 'CASH_OUT') {
+    return cashTerms(db, request);
+  }
+  throw new Error('Las órdenes de compra y venta todavía no están implementadas');
+}
+
+/** Un movimiento de efectivo se graba sobre el instrumento ARS, a mercado y con precio 1. */
+async function cashTerms(db: Db, request: CashMovementRequest): Promise<OrderTerms> {
+  const cash = await db.manager.findOneBy(Instrument, { type: CASH_INSTRUMENT_TYPE, ticker: CASH_TICKER });
+  if (!cash) {
+    throw new Error(`No existe el instrumento ${CASH_TICKER} de tipo ${CASH_INSTRUMENT_TYPE}`);
+  }
+  return { instrumentId: cash.id, type: 'MARKET', size: request.size, price: new Decimal(1) };
+}
+
+function toOrderResponse(order: Order, rejectionReason?: RejectionReason): OrderResponse {
+  return {
+    id: order.id,
+    userId: order.userId,
+    instrumentId: order.instrumentId,
+    side: order.side,
+    type: order.type,
+    size: order.size,
+    price: toApiNumber(order.price),
+    status: order.status,
+    datetime: order.datetime.toISOString(),
+    ...(rejectionReason ? { rejectionReason } : {}),
+  };
+}
