@@ -1,4 +1,5 @@
 @baseUrl = http://localhost:3000
+@orderId = 12
 
 ########## Portfolio ##########
 
@@ -258,3 +259,17 @@ Content-Type: application/json
   "type": "MARKET",
   "amount": 500
 }
+
+########## Cancelación de órdenes ##########
+
+### Cancelar una orden pendiente: usar en orderId el id que devolvió una orden LIMIT
+POST {{baseUrl}}/orders/{{orderId}}/cancel
+
+### Orden que no está en NEW (409 ORDER_NOT_CANCELLABLE)
+POST {{baseUrl}}/orders/1/cancel
+
+### Orden inexistente (404 ORDER_NOT_FOUND)
+POST {{baseUrl}}/orders/999999/cancel
+
+### Id inválido (400 VALIDATION_ERROR)
+POST {{baseUrl}}/orders/abc/cancel

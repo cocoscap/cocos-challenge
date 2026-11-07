@@ -106,7 +106,7 @@ La fecha y hora de la orden las asigna la API al grabarla.
 
 ### Cancelación de órdenes
 
-Hay un endpoint para cancelar órdenes. Solo se pueden cancelar las que están en `NEW`; en cualquier otro estado responde 409.
+Hay un endpoint para cancelar órdenes, `POST /orders/:orderId/cancel`. Solo se pueden cancelar las que están en `NEW`; en cualquier otro estado responde 409.
 
 El enunciado no lo lista entre los endpoints, pero sin él el estado `CANCELLED` sería inalcanzable. Al cancelar, el saldo que la orden tenía reservado queda liberado.
 

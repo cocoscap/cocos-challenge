@@ -230,6 +230,22 @@ Una orden `REJECTED` suma el campo `rejectionReason`: `INSUFFICIENT_FUNDS` si fa
 | `422 NO_MARKET_PRICE` | Orden `MARKET` sobre un activo sin precios cargados; admite `LIMIT` |
 | `422 AMOUNT_TOO_SMALL` | El monto no alcanza para una acción |
 
+### `POST /orders/:orderId/cancel`
+
+Cancela una orden pendiente. Solo se pueden cancelar las órdenes en estado `NEW`; al cancelarla se liberan los pesos o las acciones que tenía reservados.
+
+```bash
+curl -X POST http://localhost:3000/orders/12/cancel
+```
+
+Responde `200` con la orden actualizada, en estado `CANCELLED`.
+
+| Error | Cuándo |
+|---|---|
+| `400 VALIDATION_ERROR` | `orderId` no es un entero positivo |
+| `404 ORDER_NOT_FOUND` | La orden no existe |
+| `409 ORDER_NOT_CANCELLABLE` | La orden no está en estado `NEW` |
+
 ### Formato de los errores
 
 Todos los errores tienen la misma forma. Los de validación suman `details`, con el campo y el motivo de cada problema.
@@ -243,3 +259,16 @@ Todos los errores tienen la misma forma. Los de validación suman `details`, con
   }
 }
 ```
+
+## Limitaciones conocidas
+
+- **No se simula el mercado.** Una orden `LIMIT` queda en `NEW` hasta que se cancela; nada la ejecuta.
+- **Sin autenticación.** El id del usuario viaja en cada pedido, y cualquiera que conozca el id de una orden puede cancelarla.
+- **Escala.** El saldo y las posiciones se calculan leyendo, en cada pedido, todas las órdenes ejecutadas y pendientes del usuario. Alcanza para el volumen del challenge. Con muchas órdenes por usuario convendría sumar en SQL o guardar saldos precalculados, y agregar los índices que se listan en [DECISIONES.md](DECISIONES.md).
+- **Órdenes simultáneas.** El lock por usuario tiene su test, pero no hay un test de punta a punta con dos órdenes al mismo tiempo: requeriría dejar datos confirmados en la base provista.
+- **Fecha de las órdenes.** `orders.datetime` no guarda zona horaria, así que el valor depende de la zona del proceso que la escribe.
+- **Movimientos de efectivo.** `orders.size` es un entero: los depósitos y los retiros no admiten centavos y tienen un tope de 2.147.483.647 pesos.
+- **Motivo del rechazo.** `rejectionReason` se informa al enviar la orden, pero no se guarda en la base.
+- **Validación.** La base no tiene restricciones, así que toda la validación vive en la API. Una fila cargada por fuera de la API con un `side` o un `status` desconocido se ignora en los cálculos.
+- **Tests.** El rollback de los tests no deja filas, pero consume ids de la secuencia de `orders`: quedan saltos en la numeración.
+- **Pruebas manuales.** Los pedidos de escritura de `api.http` y de la colección de Postman sí graban órdenes reales en la base configurada.

@@ -51,7 +51,7 @@ Los tests que leen instrumentos y precios asumen los datos de `database.sql`; si
 ## 6. Cancelación de órdenes
 
 - [x] 6.1 Escribir primero los tests funcionales de `POST /orders/:orderId/cancel`: orden `NEW` → 200 `CANCELLED` y `cash.available` vuelve a subir, orden `FILLED` → 409 `ORDER_NOT_CANCELLABLE` y sigue `FILLED`, orden ya cancelada → 409, orden inexistente → 404 `ORDER_NOT_FOUND` e id inválido → 400; implementar la actualización condicional y verificar que pasan
-- [ ] 6.2 Documentar el endpoint en `README.md`, agregar su pedido a `api.http` y a la colección de Postman, y sumar al README la sección de limitaciones conocidas de `design.md`; verificar que la colección sigue siendo un JSON válido y que cada limitación de `design.md` figura en el README
+- [x] 6.2 Documentar el endpoint en `README.md`, agregar su pedido a `api.http` y a la colección de Postman, y sumar al README la sección de limitaciones conocidas de `design.md`; verificar que la colección sigue siendo un JSON válido y que cada limitación de `design.md` figura en el README
 
 ## 7. Verificación final
 

@@ -8,6 +8,10 @@
     {
       "key": "baseUrl",
       "value": "http://localhost:3000"
+    },
+    {
+      "key": "orderId",
+      "value": "12"
     }
   ],
   "item": [
@@ -509,6 +513,39 @@
               }
             },
             "url": "{{baseUrl}}/orders"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cancelación de órdenes",
+      "item": [
+        {
+          "name": "Cancelar una orden pendiente: usar en orderId el id que devolvió una orden LIMIT",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/orders/{{orderId}}/cancel"
+          }
+        },
+        {
+          "name": "Orden que no está en NEW (409 ORDER_NOT_CANCELLABLE)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/orders/1/cancel"
+          }
+        },
+        {
+          "name": "Orden inexistente (404 ORDER_NOT_FOUND)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/orders/999999/cancel"
+          }
+        },
+        {
+          "name": "Id inválido (400 VALIDATION_ERROR)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/orders/abc/cancel"
           }
         }
       ]
