@@ -55,11 +55,11 @@ Los tests que leen instrumentos y precios asumen los datos de `database.sql`; si
 
 ## 7. Verificación final
 
-- [ ] 7.1 Con `node_modules/` y `dist/` borrados, ejecutar `npm ci`, `npm run build` y `npm test`; verificar que los tres terminan sin errores
-- [ ] 7.2 Contar las filas de `orders` antes y después de `npm test`; verificar que la cantidad es la misma
-- [ ] 7.3 Levantar la app con `npm run dev` y ejecutar los pedidos de lectura de `api.http` (portfolio y búsquedas); verificar que las respuestas cumplen las specs. Los pedidos de escritura no se ejecutan contra la base provista
-- [ ] 7.4 Leer `README.md` y `DECISIONES.md` completos contra las specs y `design.md`; verificar que no se contradicen
-- [ ] 7.5 Ejecutar `openspec validate cocos-backend-api --strict`; verificar que no informa errores
+- [x] 7.1 Con `node_modules/` y `dist/` borrados, ejecutar `npm ci`, `npm run build` y `npm test`; verificar que los tres terminan sin errores
+- [x] 7.2 Contar las filas de `orders` antes y después de `npm test`; verificar que la cantidad es la misma
+- [x] 7.3 Levantar la app con `npm run dev` y ejecutar los pedidos de lectura de `api.http` (portfolio y búsquedas); verificar que las respuestas cumplen las specs. Los pedidos de escritura no se ejecutan contra la base provista
+- [x] 7.4 Leer `README.md` y `DECISIONES.md` completos contra las specs y `design.md`; verificar que no se contradicen
+- [x] 7.5 Ejecutar `openspec validate cocos-backend-api --strict`; verificar que no informa errores
 
 ## Workflow follow-up
 

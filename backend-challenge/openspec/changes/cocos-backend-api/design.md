@@ -222,8 +222,9 @@ La app asigna `new Date()` al crear la orden. El driver escribe y lee la columna
 | Lock | Que el lock por usuario excluye a una segunda conexión | Sí, sin escribir filas |
 
 - **Arnés funcional**: antes de cada test abre una transacción sobre una conexión, arma la app con un `Db` ligado a esa conexión y, al terminar, hace rollback.
-- **Datos de los tests funcionales**: con permisos mínimos solo se puede insertar en `orders`. Los tests usan usuarios e instrumentos que ya existen y arman su escenario con pedidos a la propia API (por ejemplo, un `CASH_IN`) dentro de la transacción. Las aserciones son relativas al estado previo, no a valores fijos de la base.
+- **Datos de los tests funcionales**: cada test parte de un usuario con estado de cuenta en cero. Usa un usuario sin órdenes o, si no hay ninguno, anula las órdenes de uno dentro de la transacción. Desde ahí arma su escenario con pedidos a la propia API (por ejemplo, un `CASH_IN`) o grabando filas directamente, y el rollback deshace todo. Un test del último precio inserta registros en `marketdata` del mismo modo.
 - **Test del lock**: dos conexiones abren una transacción cada una; la segunda pide el lock del mismo usuario con `lock_timeout` corto y tiene que fallar; tras el rollback de la primera, lo obtiene.
+- **Datos de referencia**: los instrumentos y los precios de `database.sql` se usan con sus valores; las órdenes que ya existen en la base, no.
 - **Ejecución en serie** (`--runInBand`): evita que dos archivos de test compitan por el lock de un mismo usuario.
 
 ### 15. Configuración
@@ -238,6 +239,8 @@ Las variables `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` y `DB_SS
 - Cada commit agrega los archivos de su tarea nombrándolos; no se usa `git add .`, para que nunca entre un archivo no previsto.
 
 ## Risks / Trade-offs
+
+Los tres primeros riesgos se verificaron durante la implementación: el usuario de la base puede leer y escribir en las cuatro tablas, los datos coinciden con `database.sql`, y TypeORM 1.1 anida las transacciones con savepoints.
 
 - [Faltan permisos mínimos sobre la base, por ejemplo `UPDATE` en `orders`] → La primera tarea que toca la base los verifica con una consulta de solo lectura. Si faltan, se frena y se avisa antes de escribir código que dependa de ellos.
 - [La base tiene datos distintos a `database.sql`] → Los tests funcionales no dependen de valores fijos. Los números del archivo se usan solo en tests unitarios, con las órdenes copiadas como datos de ejemplo.

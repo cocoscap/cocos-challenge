@@ -24,7 +24,7 @@ Los ejemplos usan al usuario 1 con los datos de `database.sql`.
 
 ### Estructura del código
 
-- Una carpeta por funcionalidad: portfolio, búsqueda de activos y órdenes.
+- Una carpeta por funcionalidad (portfolio, búsqueda de activos y órdenes) y otras para lo que comparten: el estado de cuenta, los precios de mercado y el acceso a la base.
 - Los cálculos (saldo, precio promedio, rendimiento) son funciones puras, sin acceso a la base, para poder testearlos rápido.
 - La configuración sale de variables de entorno que se validan al arrancar: si falta una credencial, la app falla con un mensaje claro.
 
@@ -153,6 +153,12 @@ La API funciona sobre las tablas tal como vienen: no agrega índices, constraint
 
 Se prefirió usar la base original tal como se entrega. Además, con el volumen de datos del challenge esos cambios no hacen falta, y las validaciones se hacen en la API.
 
+Mejoras identificadas, para aplicar en una base propia:
+
+- Índice en `orders (userid, status)`: el portfolio y cada validación recorren las órdenes del usuario.
+- `UNIQUE (instrumentid, date)` en `marketdata`: acelera la búsqueda del último precio y evita dos cierres el mismo día.
+- `UNIQUE (ticker)` en `instruments`: evita tickers duplicados.
+
 ### Verificación del acceso
 
 Antes de escribir código se revisó la base provista con consultas de solo lectura:
@@ -160,9 +166,3 @@ Antes de escribir código se revisó la base provista con consultas de solo lect
 - Es Postgres 18, con las cuatro tablas y las mismas columnas que `database.sql`.
 - Los datos coinciden con `database.sql`: 4 usuarios, 66 instrumentos, 126 precios y 11 órdenes.
 - El usuario de conexión puede leer y escribir en las cuatro tablas. La API solo escribe en `orders`.
-
-Mejoras identificadas, para aplicar en una base propia:
-
-- Índice en `orders (userid, status)`: el portfolio y cada validación recorren las órdenes del usuario.
-- `UNIQUE (instrumentid, date)` en `marketdata`: acelera la búsqueda del último precio y evita dos cierres el mismo día.
-- `UNIQUE (ticker)` en `instruments`: evita tickers duplicados.
