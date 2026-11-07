@@ -1,0 +1,66 @@
+import Decimal from 'decimal.js';
+import { ZERO } from '../shared/numbers';
+
+/** Lo que el cálculo necesita saber de una orden. La entidad `Order` cumple esta forma. */
+export interface LedgerOrder {
+  id: number;
+  instrumentId: number;
+  side: string;
+  size: number;
+  price: Decimal | null;
+  status: string;
+  datetime: Date;
+}
+
+export interface CashBalance {
+  /** Pesos del usuario según sus órdenes ejecutadas. */
+  total: Decimal;
+  /** Pesos comprometidos por compras pendientes. */
+  reserved: Decimal;
+  /** Pesos que puede usar en una orden nueva. */
+  available: Decimal;
+}
+
+export interface AccountState {
+  cash: CashBalance;
+}
+
+/**
+ * Calcula el estado de cuenta de un usuario a partir de sus órdenes.
+ * Solo cuentan las órdenes `FILLED` (mueven pesos) y `NEW` (reservan);
+ * las `REJECTED` y `CANCELLED` se ignoran.
+ */
+export function computeAccountState(orders: readonly LedgerOrder[]): AccountState {
+  let total = ZERO;
+  let reserved = ZERO;
+
+  for (const order of orders) {
+    if (order.status === 'FILLED') {
+      total = total.plus(filledCashEffect(order));
+    } else if (order.status === 'NEW' && order.side === 'BUY') {
+      reserved = reserved.plus(tradeAmount(order));
+    }
+  }
+
+  return { cash: { total, reserved, available: total.minus(reserved) } };
+}
+
+/** Cuánto suma o resta a los pesos una orden ejecutada. */
+function filledCashEffect(order: LedgerOrder): Decimal {
+  switch (order.side) {
+    case 'CASH_IN':
+      return new Decimal(order.size);
+    case 'CASH_OUT':
+      return new Decimal(order.size).negated();
+    case 'SELL':
+      return tradeAmount(order);
+    case 'BUY':
+      return tradeAmount(order).negated();
+    default:
+      return ZERO;
+  }
+}
+
+function tradeAmount(order: LedgerOrder): Decimal {
+  return (order.price ?? ZERO).times(order.size);
+}
