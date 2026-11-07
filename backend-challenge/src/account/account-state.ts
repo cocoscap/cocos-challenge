@@ -21,28 +21,62 @@ export interface CashBalance {
   available: Decimal;
 }
 
+export interface Holding {
+  /** Acciones en cartera según las órdenes ejecutadas. Es negativa si los datos traen una venta de más. */
+  quantity: number;
+  /** Acciones comprometidas por ventas pendientes. */
+  reserved: number;
+  /** Acciones que puede vender en una orden nueva. */
+  available: number;
+}
+
 export interface AccountState {
   cash: CashBalance;
+  /** Tenencia por id de instrumento. Solo incluye instrumentos con compras o ventas. */
+  holdings: Map<number, Holding>;
 }
 
 /**
  * Calcula el estado de cuenta de un usuario a partir de sus órdenes.
- * Solo cuentan las órdenes `FILLED` (mueven pesos) y `NEW` (reservan);
+ * Solo cuentan las órdenes `FILLED` (mueven pesos y acciones) y `NEW` (reservan);
  * las `REJECTED` y `CANCELLED` se ignoran.
  */
 export function computeAccountState(orders: readonly LedgerOrder[]): AccountState {
   let total = ZERO;
   let reserved = ZERO;
+  const holdings = new Map<number, Holding>();
+
+  const holdingOf = (instrumentId: number): Holding => {
+    let holding = holdings.get(instrumentId);
+    if (!holding) {
+      holding = { quantity: 0, reserved: 0, available: 0 };
+      holdings.set(instrumentId, holding);
+    }
+    return holding;
+  };
 
   for (const order of orders) {
     if (order.status === 'FILLED') {
       total = total.plus(filledCashEffect(order));
-    } else if (order.status === 'NEW' && order.side === 'BUY') {
-      reserved = reserved.plus(tradeAmount(order));
+      if (order.side === 'BUY') {
+        holdingOf(order.instrumentId).quantity += order.size;
+      } else if (order.side === 'SELL') {
+        holdingOf(order.instrumentId).quantity -= order.size;
+      }
+    } else if (order.status === 'NEW') {
+      if (order.side === 'BUY') {
+        reserved = reserved.plus(tradeAmount(order));
+      } else if (order.side === 'SELL') {
+        holdingOf(order.instrumentId).reserved += order.size;
+      }
     }
   }
 
-  return { cash: { total, reserved, available: total.minus(reserved) } };
+  for (const holding of holdings.values()) {
+    holding.available = holding.quantity - holding.reserved;
+  }
+
+  return { cash: { total, reserved, available: total.minus(reserved) }, holdings };
 }
 
 /** Cuánto suma o resta a los pesos una orden ejecutada. */

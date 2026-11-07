@@ -1,5 +1,5 @@
 import Decimal from 'decimal.js';
-import { ARS, ledgerOrder, seedOrders } from '../../test/helpers/seed-orders';
+import { ARS, BMA, LOMA, METR, PAMP, ledgerOrder, seedOrders } from '../../test/helpers/seed-orders';
 import { computeAccountState } from './account-state';
 
 describe('computeAccountState: pesos', () => {
@@ -66,5 +66,65 @@ describe('computeAccountState: pesos', () => {
 
     expect(cash.reserved.toNumber()).toBe(125500 - 35500);
     expect(cash.total.toNumber()).toBe(753000);
+  });
+});
+
+describe('computeAccountState: tenencias', () => {
+  it('calcula la tenencia del usuario 1 con sus compras y ventas ejecutadas', () => {
+    const { holdings } = computeAccountState(seedOrders);
+
+    expect(holdings.get(PAMP)?.quantity).toBe(40);
+    expect(holdings.get(METR)?.quantity).toBe(500);
+  });
+
+  it('deja una tenencia negativa cuando se ejecutó una venta mayor a lo comprado', () => {
+    const { holdings } = computeAccountState(seedOrders);
+
+    expect(holdings.get(BMA)?.quantity).toBe(-10);
+  });
+
+  it('no suma tenencia por una compra pendiente', () => {
+    const { holdings } = computeAccountState(seedOrders);
+
+    expect(holdings.has(LOMA)).toBe(false);
+  });
+
+  it('reserva las acciones de una venta pendiente', () => {
+    const { holdings } = computeAccountState([
+      ledgerOrder({ side: 'BUY', status: 'FILLED', size: 40 }),
+      ledgerOrder({ side: 'SELL', status: 'NEW', size: 15 }),
+    ]);
+
+    expect(holdings.get(PAMP)).toMatchObject({ quantity: 40, reserved: 15, available: 25 });
+  });
+
+  it('deja de reservar una venta que sale de NEW', () => {
+    const { holdings } = computeAccountState([
+      ledgerOrder({ side: 'BUY', status: 'FILLED', size: 40 }),
+      ledgerOrder({ side: 'SELL', status: 'CANCELLED', size: 15 }),
+    ]);
+
+    expect(holdings.get(PAMP)).toMatchObject({ quantity: 40, reserved: 0, available: 40 });
+  });
+
+  it('separa las tenencias por instrumento', () => {
+    const { holdings } = computeAccountState([
+      ledgerOrder({ side: 'BUY', status: 'FILLED', instrumentId: PAMP, size: 5 }),
+      ledgerOrder({ side: 'BUY', status: 'FILLED', instrumentId: METR, size: 7 }),
+      ledgerOrder({ side: 'SELL', status: 'FILLED', instrumentId: METR, size: 2 }),
+    ]);
+
+    expect(holdings.get(PAMP)?.quantity).toBe(5);
+    expect(holdings.get(METR)?.quantity).toBe(5);
+  });
+
+  it('no crea tenencias por los movimientos de efectivo', () => {
+    const { holdings } = computeAccountState(seedOrders);
+
+    expect(holdings.has(ARS)).toBe(false);
+  });
+
+  it('no tiene tenencias un usuario sin órdenes', () => {
+    expect(computeAccountState([]).holdings.size).toBe(0);
   });
 });
