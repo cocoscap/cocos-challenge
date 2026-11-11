@@ -1,0 +1,275 @@
+@baseUrl = http://localhost:3000
+@orderId = 12
+
+########## Portfolio ##########
+
+### Portfolio de un usuario
+GET {{baseUrl}}/users/1/portfolio
+
+### Portfolio de un usuario sin movimientos
+GET {{baseUrl}}/users/2/portfolio
+
+### Usuario inexistente: 404 USER_NOT_FOUND
+GET {{baseUrl}}/users/999999/portfolio
+
+### Id inválido: 400 VALIDATION_ERROR
+GET {{baseUrl}}/users/abc/portfolio
+
+########## Búsqueda de activos ##########
+
+### Buscar por ticker
+GET {{baseUrl}}/instruments?q=PAMP
+
+### Buscar por nombre
+GET {{baseUrl}}/instruments?q=molinos
+
+### Buscar sin acentos ni eñe
+GET {{baseUrl}}/instruments?q=compania
+
+### Ticker exacto primero
+GET {{baseUrl}}/instruments?q=MOLI
+
+### Limitar la cantidad de resultados
+GET {{baseUrl}}/instruments?q=s.a.&limit=5
+
+### Activo sin precios: lastPrice y dailyReturnPct en null
+GET {{baseUrl}}/instruments?q=PGR
+
+### Sin coincidencias: 200 con lista vacía
+GET {{baseUrl}}/instruments?q=zzzzzz
+
+### Sin texto de búsqueda: 400 VALIDATION_ERROR
+GET {{baseUrl}}/instruments
+
+### Límite fuera de rango: 400 VALIDATION_ERROR
+GET {{baseUrl}}/instruments?q=pamp&limit=101
+
+########## Órdenes ##########
+
+### Depósito (FILLED)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "userId": 2,
+  "side": "CASH_IN",
+  "size": 100000
+}
+
+### Retiro (FILLED)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "userId": 2,
+  "side": "CASH_OUT",
+  "size": 20000
+}
+
+### Retiro por más de lo disponible (REJECTED, INSUFFICIENT_FUNDS)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "userId": 2,
+  "side": "CASH_OUT",
+  "size": 999999999
+}
+
+### Compra MARKET por cantidad (FILLED)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "userId": 2,
+  "instrumentId": 47,
+  "side": "BUY",
+  "type": "MARKET",
+  "size": 10
+}
+
+### Compra MARKET por monto (FILLED)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "userId": 2,
+  "instrumentId": 47,
+  "side": "BUY",
+  "type": "MARKET",
+  "amount": 10000
+}
+
+### Compra LIMIT (NEW)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "userId": 2,
+  "instrumentId": 47,
+  "side": "BUY",
+  "type": "LIMIT",
+  "size": 5,
+  "price": 900
+}
+
+### Venta MARKET (FILLED)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "userId": 2,
+  "instrumentId": 47,
+  "side": "SELL",
+  "type": "MARKET",
+  "size": 2
+}
+
+### Venta LIMIT (NEW)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "userId": 2,
+  "instrumentId": 47,
+  "side": "SELL",
+  "type": "LIMIT",
+  "size": 3,
+  "price": 950
+}
+
+### Compra por más de lo disponible (REJECTED, INSUFFICIENT_FUNDS)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "userId": 2,
+  "instrumentId": 47,
+  "side": "BUY",
+  "type": "MARKET",
+  "size": 1000000
+}
+
+### Venta de un activo sin tenencia (REJECTED, INSUFFICIENT_HOLDINGS)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "userId": 2,
+  "instrumentId": 34,
+  "side": "SELL",
+  "type": "MARKET",
+  "size": 1
+}
+
+### Cantidad y monto a la vez (400 VALIDATION_ERROR)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "userId": 2,
+  "instrumentId": 47,
+  "side": "BUY",
+  "type": "MARKET",
+  "size": 10,
+  "amount": 1000
+}
+
+### Orden MARKET con precio (400 VALIDATION_ERROR)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "userId": 2,
+  "instrumentId": 47,
+  "side": "BUY",
+  "type": "MARKET",
+  "size": 10,
+  "price": 900
+}
+
+### Orden LIMIT sin precio (400 VALIDATION_ERROR)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "userId": 2,
+  "instrumentId": 47,
+  "side": "BUY",
+  "type": "LIMIT",
+  "size": 10
+}
+
+### Usuario inexistente (404 USER_NOT_FOUND)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "userId": 999999,
+  "instrumentId": 47,
+  "side": "BUY",
+  "type": "MARKET",
+  "size": 10
+}
+
+### Instrumento inexistente (404 INSTRUMENT_NOT_FOUND)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "userId": 2,
+  "instrumentId": 999999,
+  "side": "BUY",
+  "type": "MARKET",
+  "size": 10
+}
+
+### Compra de pesos (400 INSTRUMENT_NOT_TRADABLE)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "userId": 2,
+  "instrumentId": 66,
+  "side": "BUY",
+  "type": "MARKET",
+  "size": 100
+}
+
+### Orden MARKET sobre un activo sin precio (422 NO_MARKET_PRICE)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "userId": 2,
+  "instrumentId": 3,
+  "side": "BUY",
+  "type": "MARKET",
+  "size": 1
+}
+
+### Monto que no alcanza para una acción (422 AMOUNT_TOO_SMALL)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "userId": 2,
+  "instrumentId": 47,
+  "side": "BUY",
+  "type": "MARKET",
+  "amount": 500
+}
+
+########## Cancelación de órdenes ##########
+
+### Cancelar una orden pendiente: usar en orderId el id que devolvió una orden LIMIT
+POST {{baseUrl}}/orders/{{orderId}}/cancel
+
+### Orden que no está en NEW (409 ORDER_NOT_CANCELLABLE)
+POST {{baseUrl}}/orders/1/cancel
+
+### Orden inexistente (404 ORDER_NOT_FOUND)
+POST {{baseUrl}}/orders/999999/cancel
+
+### Id inválido (400 VALIDATION_ERROR)
+POST {{baseUrl}}/orders/abc/cancel
