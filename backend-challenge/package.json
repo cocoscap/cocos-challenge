@@ -1,0 +1,35 @@
+{
+  "name": "cocos-backend-challenge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "API REST del challenge de backend de Cocos: portfolio, búsqueda de activos y órdenes",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/server.js",
+    "test": "jest --runInBand"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "dependencies": {
+    "decimal.js": "^10.6.0",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "pg": "^8.23.1",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^1.1.2",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.19.2",
+    "@types/supertest": "^7.2.1",
+    "jest": "^30.5.2",
+    "supertest": "^7.3.2",
+    "ts-jest": "^29.4.15",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9"
+  }
+}
